@@ -5,6 +5,7 @@ const dotenv = require('dotenv');
 const passport = require('passport');
 const { connectDB } = require('./config/db');
 const authRoutes = require('./routes/auth');
+const roomRoutes = require('./routes/rooms');
 
 dotenv.config();
 
@@ -27,6 +28,7 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/rooms', roomRoutes);
 
 async function start() {
   try {
