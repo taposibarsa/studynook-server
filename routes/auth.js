@@ -5,7 +5,6 @@ const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const { ObjectId } = require('mongodb');
 const { getDb } = require('../config/db');
-const { authMiddleware } = require('../middleware/auth');
 const { setTokenCookie, clearTokenCookie } = require('../utils/cookies');
 
 const router = express.Router();
