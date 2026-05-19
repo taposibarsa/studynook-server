@@ -2,7 +2,9 @@ const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const dotenv = require('dotenv');
+const passport = require('passport');
 const { connectDB } = require('./config/db');
+const authRoutes = require('./routes/auth');
 
 dotenv.config();
 
@@ -18,10 +20,13 @@ app.use(
 );
 app.use(express.json());
 app.use(cookieParser());
+app.use(passport.initialize());
 
 app.get('/', (req, res) => {
   res.send('StudyNook API is running');
 });
+
+app.use('/api/auth', authRoutes);
 
 async function start() {
   try {
