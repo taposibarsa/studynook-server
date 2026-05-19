@@ -1,41 +1,38 @@
 const express = require('express');
+const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const dotenv = require('dotenv');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { connectDB } = require('./config/db');
 
 dotenv.config();
 
 const app = express();
-
 const port = process.env.PORT || 5000;
+const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
 
-const uri = process.env.MONGODB_URI;
+app.use(
+  cors({
+    origin: clientUrl,
+    credentials: true,
+  })
+);
+app.use(express.json());
+app.use(cookieParser());
 
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  }
+app.get('/', (req, res) => {
+  res.send('StudyNook API is running');
 });
 
-async function run() {
+async function start() {
   try {
-    await client.connect();
-
-    await client.db("admin").command({ ping: 1 });
-
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    await connectDB();
+    app.listen(port, () => {
+      console.log(`Server running on port ${port}`);
+    });
   } catch (error) {
-    console.log(error);
+    console.error('Failed to start server:', error);
+    process.exit(1);
   }
 }
 
-run();
-
-app.get('/', (req, res) => {
-  res.send('Server is running fine');
-});
-
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});
+start();
