@@ -144,7 +144,7 @@ router.post('/login', async (req, res) => {
   }
 });
 
-router.post('/logout', authMiddleware, (req, res) => {
+router.post('/logout', (req, res) => {
   clearTokenCookie(res);
   res.json({ message: 'Logged out' });
 });
