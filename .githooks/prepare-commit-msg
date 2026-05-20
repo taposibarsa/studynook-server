@@ -1,0 +1,3 @@
+#!/bin/sh
+HOOK_DIR="$(cd "$(dirname "$0")" && pwd)"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$HOOK_DIR/strip-cursor-attribution.ps1" "$1"
