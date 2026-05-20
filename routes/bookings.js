@@ -2,6 +2,7 @@ const express = require('express');
 const { ObjectId } = require('mongodb');
 const { getDb } = require('../config/db');
 const { authMiddleware } = require('../middleware/auth');
+const { isObjectIdString, toDbUserId, userIdMatchQuery, userIdsMatch } = require('../utils/userId');
 
 const router = express.Router();
 
@@ -25,7 +26,7 @@ router.get('/mine', authMiddleware, async (req, res) => {
     const bookings = await db
       .collection('bookings')
       .aggregate([
-        { $match: { userId: new ObjectId(req.user.id) } },
+        { $match: userIdMatchQuery('userId', req.user.id) },
         { $sort: { createdAt: -1 } },
         {
           $lookup: {
@@ -114,10 +115,12 @@ router.post('/', authMiddleware, async (req, res) => {
 
     const result = await db.collection('bookings').insertOne(booking);
 
-    await db.collection('users').updateOne(
-      { _id: new ObjectId(req.user.id) },
-      { $push: { bookingIds: result.insertedId } }
-    );
+    if (isObjectIdString(req.user.id)) {
+      await db.collection('users').updateOne(
+        { _id: new ObjectId(req.user.id) },
+        { $push: { bookingIds: result.insertedId } }
+      );
+    }
 
     await db.collection('rooms').updateOne(
       { _id: new ObjectId(roomId) },
@@ -151,7 +154,7 @@ router.patch('/:id/cancel', authMiddleware, async (req, res) => {
       return res.status(404).json({ message: 'Booking not found' });
     }
 
-    if (booking.userId.toString() !== req.user.id) {
+    if (!userIdsMatch(booking.userId, req.user.id)) {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
@@ -171,10 +174,12 @@ router.patch('/:id/cancel', authMiddleware, async (req, res) => {
       { $set: { status: 'cancelled' } }
     );
 
-    await db.collection('users').updateOne(
-      { _id: new ObjectId(req.user.id) },
-      { $pull: { bookingIds: new ObjectId(id) } }
-    );
+    if (isObjectIdString(req.user.id)) {
+      await db.collection('users').updateOne(
+        { _id: new ObjectId(req.user.id) },
+        { $pull: { bookingIds: new ObjectId(id) } }
+      );
+    }
 
     res.json({ message: 'Booking cancelled' });
   } catch (error) {

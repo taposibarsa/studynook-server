@@ -1,34 +1,62 @@
 const jwt = require('jsonwebtoken');
 
-function authMiddleware(req, res, next) {
-  const token = req.cookies?.token;
+const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:3000';
 
-  if (!token) {
-    return res.status(401).json({ message: 'Unauthorized' });
-  }
+async function getBetterAuthUser(cookieHeader) {
+  if (!cookieHeader) return null;
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = { id: decoded.userId };
-    next();
+    const res = await fetch(`${CLIENT_URL}/api/auth/get-session`, {
+      headers: { cookie: cookieHeader },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data?.user?.id) {
+      return { id: data.user.id };
+    }
   } catch {
-    return res.status(401).json({ message: 'Unauthorized' });
+    return null;
   }
+  return null;
 }
 
-function optionalAuth(req, res, next) {
+async function authMiddleware(req, res, next) {
   const token = req.cookies?.token;
-  if (!token) {
-    req.user = null;
+
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      req.user = { id: decoded.userId };
+      return next();
+    } catch {
+      /* fall through to better-auth */
+    }
+  }
+
+  const betterAuthUser = await getBetterAuthUser(req.headers.cookie);
+  if (betterAuthUser) {
+    req.user = betterAuthUser;
     return next();
   }
 
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = { id: decoded.userId };
-  } catch {
-    req.user = null;
+  return res.status(401).json({ message: 'Unauthorized' });
+}
+
+async function optionalAuth(req, res, next) {
+  const token = req.cookies?.token;
+
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      req.user = { id: decoded.userId };
+      return next();
+    } catch {
+      /* continue */
+    }
   }
+
+  const betterAuthUser = await getBetterAuthUser(req.headers.cookie);
+  req.user = betterAuthUser;
   next();
 }
 

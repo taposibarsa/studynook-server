@@ -3,6 +3,7 @@ const { ObjectId } = require('mongodb');
 const { getDb } = require('../config/db');
 const { authMiddleware } = require('../middleware/auth');
 const { optionalAuth } = require('../middleware/auth');
+const { toDbUserId, userIdMatchQuery, userIdsMatch } = require('../utils/userId');
 
 const router = express.Router();
 
@@ -66,7 +67,7 @@ router.get('/mine', authMiddleware, async (req, res) => {
     const db = getDb();
     const rooms = await db
       .collection('rooms')
-      .find({ ownerId: new ObjectId(req.user.id) })
+      .find(userIdMatchQuery('ownerId', req.user.id))
       .sort({ createdAt: -1 })
       .toArray();
 
@@ -110,8 +111,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
       return res.status(404).json({ message: 'Room not found' });
     }
 
-    const isOwner =
-      req.user && room.ownerId.toString() === req.user.id.toString();
+    const isOwner = req.user && userIdsMatch(room.ownerId, req.user.id);
 
     res.json({ ...room, isOwner });
   } catch (error) {
@@ -145,7 +145,7 @@ router.post('/', authMiddleware, async (req, res) => {
       capacity: Number(capacity),
       hourlyRate: Number(hourlyRate),
       amenities: Array.isArray(amenities) ? amenities : [],
-      ownerId: new ObjectId(req.user.id),
+      ownerId: toDbUserId(req.user.id),
       bookingCount: 0,
       createdAt: new Date(),
     };
@@ -178,7 +178,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ message: 'Room not found' });
     }
 
-    if (room.ownerId.toString() !== req.user.id) {
+    if (!userIdsMatch(room.ownerId, req.user.id)) {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
@@ -229,7 +229,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ message: 'Room not found' });
     }
 
-    if (room.ownerId.toString() !== req.user.id) {
+    if (!userIdsMatch(room.ownerId, req.user.id)) {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
