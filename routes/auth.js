@@ -35,7 +35,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
         callbackURL:
           process.env.GOOGLE_CALLBACK_URL ||
-          'http://localhost:5000/api/auth/google/callback',
+          `${process.env.CLIENT_URL || 'http://localhost:3000'}/api/backend/auth/google/callback`,
       },
       async (_accessToken, _refreshToken, profile, done) => {
         try {

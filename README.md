@@ -19,7 +19,7 @@ Express API for the StudyNook library study room booking platform.
 | `CLIENT_URL` | Frontend URL for CORS and OAuth redirect |
 | `GOOGLE_CLIENT_ID` | Google OAuth client ID |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
-| `GOOGLE_CALLBACK_URL` | OAuth callback URL |
+| `GOOGLE_CALLBACK_URL` | OAuth callback URL (default: `{CLIENT_URL}/api/backend/auth/google/callback` via client proxy) |
 
 ## API overview
 
@@ -29,7 +29,7 @@ Express API for the StudyNook library study room booking platform.
 - `POST /api/auth/logout` — Clear cookie (requires auth)
 - `GET /api/auth/me` — Current user profile
 - `GET /api/auth/google` — Google OAuth
-- `GET /api/auth/google/callback` — OAuth callback
+- `GET /api/auth/google/callback` — OAuth callback (use client proxy URL in production)
 
 ### Rooms
 - `GET /api/rooms/latest` — Latest 6 rooms (home page)
